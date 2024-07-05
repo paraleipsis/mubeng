@@ -15,7 +15,7 @@ import (
 )
 
 // onRequest handles client request
-func (p *Proxy) onRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+func (p *Proxy) onRequest(req *http.Request, _ *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 	if p.Options.Sync {
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -71,7 +71,9 @@ func (p *Proxy) onRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 			resChan <- err
 			return
 		}
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			_ = Body.Close()
+		}(resp.Body)
 
 		buf, err := io.ReadAll(resp.Body)
 		if err != nil {
@@ -130,7 +132,7 @@ func (p *Proxy) onConnect(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectA
 }
 
 // onResponse handles backend responses, and removing hop-by-hop headers
-func (p *Proxy) onResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
+func (p *Proxy) onResponse(resp *http.Response, _ *goproxy.ProxyCtx) *http.Response {
 	for _, h := range mubeng.HopHeaders {
 		resp.Header.Del(h)
 	}

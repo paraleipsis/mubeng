@@ -1,22 +1,22 @@
 package common
 
 var (
-  // App name
-  App = "mubeng"
-  // Version of mubeng itself
-  Version = ""
-  // Email handles of developer
-  Email = "infosec@kitabisa.com"
-  // Banner of mubeng
-  Banner = `
+	// App name
+	App = "mubeng"
+	// Version of mubeng itself
+	Version = ""
+	// Email handles of developer
+	Email = "infosec@kitabisa.com"
+	// Banner of mubeng
+	Banner = `
            _   ` + Version + `
  _____ _ _| |_ ___ ___ ___ 
 |     | | | . | -_|   | . |
 |_|_|_|___|___|___|_|_|_  |
                       |___|
  ` + Email
-  // Usage of mubeng
-  Usage = `
+	// Usage of mubeng
+	Usage = `
   mubeng [-c|-a :8080] -f file.txt [options...]
 
 Options:
@@ -32,6 +32,8 @@ Options:
     -c, --check                      Perform proxy check
     -g, --goroutine <N>              Max. goroutine to use (default: 10)
         --only-cc <AA>,<BB>          Only for specific country code (comma separated)
+	-cp, --check-periodically        Perform proxy check periodically
+    -p  --polling-period             Poling period for periodic proxy check (default: @every 5m)
   
   IP ROTATOR
     -a, --address <ADDR>:<PORT>      Run proxy server

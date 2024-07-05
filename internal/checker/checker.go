@@ -3,8 +3,11 @@ package checker
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/projectdiscovery/gologger"
+	"github.com/robfig/cron/v3"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -14,6 +17,27 @@ import (
 	"ktbs.dev/mubeng/pkg/helper"
 	"ktbs.dev/mubeng/pkg/mubeng"
 )
+
+func Run(opt *common.Options) {
+	c := cron.New()
+
+	_, err := c.AddFunc(opt.PollingPeriod, func() {
+		Do(opt)
+
+		if opt.Output != "" {
+			defer func(Result *os.File) {
+				_ = Result.Close()
+			}(opt.Result)
+		}
+	},
+	)
+
+	if err != nil {
+		gologger.Fatal().Msgf("Error! %s", err)
+	}
+
+	c.Start()
+}
 
 // Do checks proxy from list.
 //

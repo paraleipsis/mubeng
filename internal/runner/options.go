@@ -60,6 +60,12 @@ func Options() *common.Options {
 	flag.IntVar(&opt.Goroutine, "g", 10, "")
 	flag.IntVar(&opt.Goroutine, "goroutine", 10, "")
 
+	flag.StringVar(&opt.PollingPeriod, "p", "@every 5m", "")
+	flag.StringVar(&opt.PollingPeriod, "polling-period", "@every 5m", "")
+
+	flag.BoolVar(&opt.CheckPeriodically, "cp", false, "")
+	flag.BoolVar(&opt.CheckPeriodically, "check-periodically-period", false, "")
+
 	flag.Usage = func() {
 		showBanner()
 		showUsage()

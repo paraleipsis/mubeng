@@ -14,6 +14,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mbndr/logo v0.0.1
 	github.com/projectdiscovery/gologger v1.1.4
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/sourcegraph/conc v0.3.0
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
 	github.com/valyala/fastrand v1.1.0

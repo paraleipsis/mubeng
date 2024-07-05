@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mubeng-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mubeng-proxy
+    command:
+      - '-a=0.0.0.0:8089'
+      - '-f=/live.txt'
+      - '-r=1'
+      - '-m=sequent'
+      - '-w'
+    image: mubeng
+    restart: unless-stopped
+    ports:
+      - "16743:8089"
+    volumes:
+      - ./live.txt:/live.txt
+
+  mubeng-checker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mubeng-checker
+    command:
+      - '-f=/proxies.txt'
+      - '--check'
+      - '--output=/live.txt'
+      - '-cp'
+      - '-p=@every 5m'
+    image: mubeng
+    restart: unless-stopped
+    volumes:
+      - ./proxies.txt:/proxies.txt
+      - ./live.txt:/live.txt

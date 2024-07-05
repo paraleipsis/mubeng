@@ -1,8 +1,8 @@
 package runner
 
 import (
+	"context"
 	"errors"
-
 	"ktbs.dev/mubeng/common"
 	"ktbs.dev/mubeng/internal/checker"
 	"ktbs.dev/mubeng/internal/daemon"
@@ -11,7 +11,13 @@ import (
 
 // New to switch an action, whether to check or run a proxy server.
 func New(opt *common.Options) error {
-	if opt.Address != "" {
+	if opt.CheckPeriodically {
+		ctx := context.Background()
+
+		go checker.Run(opt)
+
+		<-ctx.Done()
+	} else if opt.Address != "" {
 		if opt.Daemon {
 			return daemon.New(opt)
 		}
