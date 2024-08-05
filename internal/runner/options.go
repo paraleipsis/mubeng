@@ -64,7 +64,10 @@ func Options() *common.Options {
 	flag.StringVar(&opt.PollingPeriod, "polling-period", "@every 5m", "")
 
 	flag.BoolVar(&opt.CheckPeriodically, "cp", false, "")
-	flag.BoolVar(&opt.CheckPeriodically, "check-periodically-period", false, "")
+	flag.BoolVar(&opt.CheckPeriodically, "check-periodically", false, "")
+
+	flag.BoolVar(&opt.TgAlert, "tg", false, "")
+	flag.BoolVar(&opt.TgAlert, "tg-alert", false, "")
 
 	flag.Usage = func() {
 		showBanner()

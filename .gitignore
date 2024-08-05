@@ -4,3 +4,5 @@ dist/*
 *.crt
 *.key
 .idea
+docker-compose.local.yml
+tg_bot.env

@@ -29,17 +29,18 @@ Options:
     -V, --version                    Show current mubeng version
   
   PROXY CHECKER
-    -c, --check                      Perform proxy check
-    -g, --goroutine <N>              Max. goroutine to use (default: 10)
-        --only-cc <AA>,<BB>          Only for specific country code (comma separated)
+    -c,  --check                     Perform proxy check
+    -g,  --goroutine <N>             Max. goroutine to use (default: 10)
+         --only-cc <AA>,<BB>         Only for specific country code (comma separated)
 	-cp, --check-periodically        Perform proxy check periodically
-    -p  --polling-period             Poling period for periodic proxy check (default: @every 5m)
+    -p,  --polling-period            Poling period for periodic proxy check (default: @every 5m)
+    -tg  --tg-alert                  Send telegram notification alert
   
   IP ROTATOR
     -a, --address <ADDR>:<PORT>      Run proxy server
     -A, --auth <USER>:<PASS>         Set authorization for proxy server
     -d, --daemon                     Daemonize proxy server
-    -m, --method <METHOD>            Rotation method (sequent/random) (default: sequent)
+    -m, --method <METHOD>            Rotation method (sequent/random/round-robin) (default: sequent)
     -r, --rotate <N>                 Rotate proxy IP after N request (default: 1)
     -s, --sync                       Syncrounus mode
     -w, --watch                      Watch proxy file, live-reload from changes

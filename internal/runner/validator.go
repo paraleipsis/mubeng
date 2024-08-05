@@ -23,14 +23,15 @@ func validate(opt *common.Options) error {
 		return err
 	}
 
-	opt.ProxyManager, err = proxymanager.New(opt.File)
+	opt.ProxyManager, err = proxymanager.New(opt.File, opt.Method)
 	if err != nil {
 		return err
 	}
 
 	validMethod := map[string]bool{
-		"sequent": true,
-		"random":  true,
+		"sequent":     true,
+		"random":      true,
+		"round-robin": true,
 	}
 
 	if opt.Address != "" && !opt.Check {

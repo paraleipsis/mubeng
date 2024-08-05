@@ -10,7 +10,7 @@ services:
       - '-a=0.0.0.0:8089'
       - '-f=/live.txt'
       - '-r=1'
-      - '-m=sequent'
+      - '-m=round-robin'
       - '-w'
     image: mubeng
     restart: unless-stopped
@@ -29,7 +29,9 @@ services:
       - '--check'
       - '--output=/live.txt'
       - '-cp'
-      - '-p=@every 5m'
+      - '-p=@every 1h'
+      - '-tg'
+      - '-v'
     image: mubeng
     restart: unless-stopped
     volumes:

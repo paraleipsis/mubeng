@@ -31,6 +31,21 @@ func (p *Proxy) onRequest(req *http.Request, _ *goproxy.ProxyCtx) (*http.Request
 			rotate = p.Options.ProxyManager.RandomProxy()
 		}
 
+		if p.Options.Method == "round-robin" {
+			var rotateOk bool
+
+			rotate, rotateOk = p.Options.ProxyManager.RoundRobin.Next()
+
+			if !rotateOk {
+				log.Errorf("%s %s", req.RemoteAddr, "no available proxies")
+				resp := goproxy.NewResponse(req, mime, http.StatusBadGateway, "Proxy server error")
+
+				return req, resp
+			}
+
+			log.Debugf(rotate)
+		}
+
 		if ok >= p.Options.Rotate {
 			ok = 1
 		}

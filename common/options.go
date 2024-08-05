@@ -29,4 +29,5 @@ type Options struct {
 	Watch             bool
 	PollingPeriod     string
 	CheckPeriodically bool
+	TgAlert           bool
 }

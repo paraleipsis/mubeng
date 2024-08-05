@@ -14,7 +14,9 @@ func New(opt *common.Options) error {
 	if opt.CheckPeriodically {
 		ctx := context.Background()
 
-		go checker.Run(opt)
+		proxyChecker := &checker.ProxyChecker{}
+
+		go proxyChecker.Run(opt)
 
 		<-ctx.Done()
 	} else if opt.Address != "" {
@@ -24,7 +26,9 @@ func New(opt *common.Options) error {
 
 		server.Run(opt)
 	} else if opt.Check {
-		checker.Do(opt)
+		proxyChecker := &checker.ProxyChecker{}
+
+		proxyChecker.Do(opt)
 
 		if opt.Output != "" {
 			defer opt.Result.Close()

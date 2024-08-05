@@ -3,6 +3,7 @@ package proxymanager
 import (
 	"bufio"
 	"fmt"
+	"ktbs.dev/mubeng/pkg/loadbalancer"
 	"math/rand"
 	"os"
 	"time"
@@ -13,10 +14,12 @@ import (
 
 // ProxyManager defines the proxy list and current proxy position
 type ProxyManager struct {
-	CurrentIndex int
-	filepath     string
-	Length       int
-	Proxies      []string
+	CurrentIndex   int
+	filepath       string
+	Length         int
+	Proxies        []string
+	RoundRobin     *loadbalancer.LoadBalancer[string]
+	RotationMethod string
 }
 
 func init() {
@@ -26,7 +29,7 @@ func init() {
 }
 
 // New initialize ProxyManager
-func New(filename string) (*ProxyManager, error) {
+func New(filename string, rotationMethod string) (*ProxyManager, error) {
 	keys := make(map[string]bool)
 
 	file, err := os.Open(filename)
@@ -37,6 +40,7 @@ func New(filename string) (*ProxyManager, error) {
 
 	manager.Proxies = []string{}
 	manager.filepath = filename
+	manager.RotationMethod = rotationMethod
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -53,6 +57,18 @@ func New(filename string) (*ProxyManager, error) {
 	manager.Length = len(manager.Proxies)
 	if manager.Length < 1 {
 		return manager, fmt.Errorf("open %s: has no valid proxy URLs", filename)
+	}
+
+	if rotationMethod == "round-robin" {
+		rateLimiter := func() {
+			time.Sleep(200 * time.Millisecond)
+		}
+
+		rr := loadbalancer.NewLoadBalancer[string](&rateLimiter)
+
+		manager.RoundRobin = rr
+
+		manager.RoundRobin.AddItems(manager.Proxies...)
 	}
 
 	return manager, scanner.Err()
