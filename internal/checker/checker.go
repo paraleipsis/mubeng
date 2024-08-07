@@ -35,12 +35,6 @@ func (pc *ProxyChecker) Run(opt *common.Options) {
 
 	_, err := c.AddFunc(opt.PollingPeriod, func() {
 		pc.Do(opt)
-
-		if opt.Output != "" {
-			defer func(Result *os.File) {
-				_ = Result.Close()
-			}(opt.Result)
-		}
 	},
 	)
 
@@ -58,12 +52,14 @@ func (pc *ProxyChecker) Run(opt *common.Options) {
 func (pc *ProxyChecker) Do(opt *common.Options) {
 	p := pool.New().WithMaxGoroutines(opt.Goroutine)
 	var deadProxies []string
+	var liveProxies []IPInfo
 
 	for _, proxy := range opt.ProxyManager.Proxies {
 		address := helper.EvalFunc(proxy)
 
 		p.Go(func() {
 			addr, err := pc.check(address, opt.Timeout)
+
 			if len(opt.Countries) > 0 && !pc.isMatchCC(opt.Countries, addr.Country) {
 				return
 			}
@@ -73,26 +69,55 @@ func (pc *ProxyChecker) Do(opt *common.Options) {
 					fmt.Printf("[%s] %s\n", aurora.Red("DIED"), address)
 				}
 
-				deadProxy := address
+				unavailableProxy := proxy
 
-				parts := strings.Split(deadProxy, "@")
+				parts := strings.Split(unavailableProxy, "@")
 
 				if len(parts) > 1 {
-					deadProxy = parts[1]
+					unavailableProxy = parts[1]
 				}
 
-				deadProxies = append(deadProxies, deadProxy)
+				deadProxies = append(deadProxies, unavailableProxy)
 			} else {
 				fmt.Printf("[%s] [%s] [%s] %s\n", aurora.Green("LIVE"), aurora.Magenta(addr.Country), aurora.Cyan(addr.IP), address)
+				addr.IP = address
 
-				if opt.Output != "" {
-					fmt.Fprintf(opt.Result, "%s\n", address)
-				}
+				liveProxies = append(liveProxies, addr)
 			}
 		})
 	}
 
 	p.Wait()
+
+	if opt.Output != "" {
+		file, err := os.Open(opt.Result.Name())
+
+		if err != nil {
+			gologger.Error().Msgf("Error! %s", err)
+			return
+		}
+
+		defer func(file *os.File) {
+			_ = file.Close()
+		}(file)
+
+		var proxies []byte
+
+		for _, ipInfo := range liveProxies {
+			if ipInfo.Country != "" {
+				proxies = append(proxies, []byte(fmt.Sprintf("%s|%s\n", ipInfo.IP, ipInfo.Country))...)
+			} else {
+				proxies = append(proxies, []byte(fmt.Sprintf("%s\n", ipInfo.IP))...)
+			}
+		}
+
+		err = os.WriteFile(opt.Result.Name(), proxies, 0644)
+
+		if err != nil {
+			gologger.Error().Msgf("Error! %s", err)
+			return
+		}
+	}
 
 	if len(deadProxies) > 0 && opt.TgAlert {
 		msgID, err := pc.sendTgProxyAlert(deadProxies)
@@ -140,14 +165,16 @@ func (pc *ProxyChecker) isMatchCC(cc []string, code string) bool {
 }
 
 func (pc *ProxyChecker) check(address string, timeout time.Duration) (IPInfo, error) {
+	var info IPInfo
+
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
-		return ipinfo, err
+		return info, err
 	}
 
 	tr, err := mubeng.Transport(address)
 	if err != nil {
-		return ipinfo, err
+		return info, err
 	}
 
 	proxy := &mubeng.Proxy{
@@ -161,23 +188,25 @@ func (pc *ProxyChecker) check(address string, timeout time.Duration) (IPInfo, er
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return ipinfo, err
+		return info, err
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ipinfo, err
+		return info, err
 	}
 
-	err = json.Unmarshal(body, &ipinfo)
+	err = json.Unmarshal(body, &info)
 	if err != nil {
-		return ipinfo, err
+		return info, err
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	defer tr.CloseIdleConnections()
 
-	return ipinfo, nil
+	return info, nil
 }
 
 func (pc *ProxyChecker) newHttpClient() *resty.Client {

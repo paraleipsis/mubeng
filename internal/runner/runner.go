@@ -7,6 +7,7 @@ import (
 	"ktbs.dev/mubeng/internal/checker"
 	"ktbs.dev/mubeng/internal/daemon"
 	"ktbs.dev/mubeng/internal/server"
+	"os"
 )
 
 // New to switch an action, whether to check or run a proxy server.
@@ -19,6 +20,12 @@ func New(opt *common.Options) error {
 		go proxyChecker.Run(opt)
 
 		<-ctx.Done()
+
+		if opt.Output != "" {
+			defer func(Result *os.File) {
+				_ = Result.Close()
+			}(opt.Result)
+		}
 	} else if opt.Address != "" {
 		if opt.Daemon {
 			return daemon.New(opt)

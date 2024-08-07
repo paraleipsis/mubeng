@@ -3,13 +3,13 @@ package proxymanager
 import (
 	"bufio"
 	"fmt"
+	"ktbs.dev/mubeng/pkg/helper"
 	"ktbs.dev/mubeng/pkg/loadbalancer"
+	"ktbs.dev/mubeng/pkg/mubeng"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
-
-	"ktbs.dev/mubeng/pkg/helper"
-	"ktbs.dev/mubeng/pkg/mubeng"
 )
 
 // ProxyManager defines the proxy list and current proxy position
@@ -45,6 +45,8 @@ func New(filename string, rotationMethod string) (*ProxyManager, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		proxy := helper.Eval(scanner.Text())
+		proxy = strings.Split(proxy, "|")[0]
+
 		if _, value := keys[proxy]; !value {
 			_, err = mubeng.Transport(placeholder.ReplaceAllString(proxy, ""))
 			if err == nil {
@@ -61,7 +63,7 @@ func New(filename string, rotationMethod string) (*ProxyManager, error) {
 
 	if rotationMethod == "round-robin" {
 		rateLimiter := func() {
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(0 * time.Millisecond)
 		}
 
 		rr := loadbalancer.NewLoadBalancer[string](&rateLimiter)

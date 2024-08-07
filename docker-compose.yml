@@ -29,11 +29,13 @@ services:
       - '--check'
       - '--output=/live.txt'
       - '-cp'
-      - '-p=@every 1h'
+      - '-p=@every 10m'
       - '-tg'
       - '-v'
     image: mubeng
     restart: unless-stopped
+    env_file:
+      - ./tg_bot.env
     volumes:
       - ./proxies.txt:/proxies.txt
       - ./live.txt:/live.txt

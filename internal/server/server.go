@@ -1,14 +1,14 @@
 package server
 
 import (
-	"net/http"
-	"os"
-	"os/signal"
-
+	"errors"
 	"github.com/elazarl/goproxy"
 	"github.com/henvic/httpretty"
 	"github.com/mbndr/logo"
 	"ktbs.dev/mubeng/common"
+	"net/http"
+	"os"
+	"os/signal"
 )
 
 // Run proxy server with a user defined listener.
@@ -31,12 +31,13 @@ func Run(opt *common.Options) {
 	}
 
 	handler = &Proxy{}
+
 	handler.Options = opt
 	handler.HTTPProxy = goproxy.NewProxyHttpServer()
 	handler.HTTPProxy.OnRequest().DoFunc(handler.onRequest)
 	handler.HTTPProxy.OnRequest().HandleConnectFunc(handler.onConnect)
 	handler.HTTPProxy.OnResponse().DoFunc(handler.onResponse)
-	handler.HTTPProxy.NonproxyHandler = http.HandlerFunc(nonProxy)
+	handler.HTTPProxy.NonproxyHandler = http.HandlerFunc(handler.nonProxy)
 
 	server = &http.Server{
 		Addr:    opt.Address,
@@ -60,7 +61,7 @@ func Run(opt *common.Options) {
 	go interrupt(stop)
 
 	log.Infof("[PID: %d] Starting proxy server on %s", os.Getpid(), opt.Address)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}
 }

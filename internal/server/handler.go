@@ -1,17 +1,19 @@
 package server
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"strings"
-
 	"github.com/elazarl/goproxy"
+	"io"
 	"ktbs.dev/mubeng/common"
 	"ktbs.dev/mubeng/pkg/helper"
 	"ktbs.dev/mubeng/pkg/mubeng"
+	"net/http"
+	"os"
+	"strings"
 )
 
 // onRequest handles client request
@@ -156,12 +158,13 @@ func (p *Proxy) onResponse(resp *http.Response, _ *goproxy.ProxyCtx) *http.Respo
 }
 
 // nonProxy handles non-proxy requests
-func nonProxy(w http.ResponseWriter, req *http.Request) {
+func (p *Proxy) nonProxy(w http.ResponseWriter, req *http.Request) {
 	if common.Version != "" {
 		w.Header().Add("X-Mubeng-Version", common.Version)
 	}
 
-	if req.URL.Path == "/cert" {
+	switch req.URL.Path {
+	case "/cert":
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprint("attachment; filename=", "goproxy-cacert.der"))
 		w.WriteHeader(http.StatusOK)
@@ -169,6 +172,59 @@ func nonProxy(w http.ResponseWriter, req *http.Request) {
 		if _, err := w.Write(goproxy.GoproxyCa.Certificate[0]); err != nil {
 			http.Error(w, "Failed to get proxy certificate authority.", 500)
 			log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
+			return
+		}
+
+		return
+	case "/list":
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		file, err := os.Open(p.Options.File)
+
+		if err != nil {
+			http.Error(w, "Failed to get proxies list", 500)
+			log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
+			return
+		}
+
+		defer func(file *os.File) {
+			_ = file.Close()
+		}(file)
+
+		proxiesByRegion := make(map[string][]string)
+
+		scanner := bufio.NewScanner(file)
+
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			parts := strings.Split(line, "|")
+
+			if len(parts) != 2 {
+				http.Error(w, "Failed to get proxies list", 500)
+				log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, fmt.Sprintf("Invalid proxy %s", line))
+				return
+			}
+
+			region := parts[1]
+			proxy := parts[0]
+
+			proxiesByRegion[region] = append(proxiesByRegion[region], proxy)
+		}
+
+		proxies, err := json.Marshal(proxiesByRegion)
+
+		if err != nil {
+			http.Error(w, "Failed to get proxies list", 500)
+			log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
+			return
+		}
+
+		if _, err := w.Write(proxies); err != nil {
+			http.Error(w, "Failed to get proxies list", 500)
+			log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
+			return
 		}
 
 		return
