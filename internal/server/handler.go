@@ -159,6 +159,20 @@ func (p *Proxy) onResponse(resp *http.Response, _ *goproxy.ProxyCtx) *http.Respo
 
 // nonProxy handles non-proxy requests
 func (p *Proxy) nonProxy(w http.ResponseWriter, req *http.Request) {
+	if p.Options.Auth != "" {
+		user, password, ok := req.BasicAuth()
+
+		if ok {
+			if fmt.Sprintf("%s:%s", user, password) != p.Options.Auth {
+				http.Error(w, "Invalid proxy authorization", 407)
+				return
+			}
+		} else {
+			http.Error(w, "Invalid proxy authorization", 407)
+			return
+		}
+	}
+
 	if common.Version != "" {
 		w.Header().Add("X-Mubeng-Version", common.Version)
 	}
