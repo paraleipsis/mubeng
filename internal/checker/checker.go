@@ -69,7 +69,7 @@ func (pc *ProxyChecker) Do(opt *common.Options) {
 					fmt.Printf("[%s] %s\n", aurora.Red("DIED"), address)
 				}
 
-				unavailableProxy := proxy
+				unavailableProxy := address
 
 				parts := strings.Split(unavailableProxy, "@")
 
