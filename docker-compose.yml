@@ -30,7 +30,8 @@ services:
       - '--output=/live.txt'
       - '-cp'
       - '-p=@every 10m'
-      - '-tg'
+      - '--tg-alert'
+      - '--tg-bot'
       - '-v'
     image: mubeng
     restart: unless-stopped

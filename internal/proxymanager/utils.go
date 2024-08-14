@@ -1,6 +1,7 @@
 package proxymanager
 
 import (
+	"log"
 	"math/rand"
 
 	"github.com/fsnotify/fsnotify"
@@ -30,7 +31,7 @@ func (p *ProxyManager) Watch() (*fsnotify.Watcher, error) {
 		return watcher, err
 	}
 
-	if err := watcher.Add(p.filepath); err != nil {
+	if err := watcher.Add(p.Filepath); err != nil {
 		return watcher, err
 	}
 
@@ -40,12 +41,36 @@ func (p *ProxyManager) Watch() (*fsnotify.Watcher, error) {
 // Reload proxy pool
 func (p *ProxyManager) Reload() error {
 	i := p.CurrentIndex
+	diedProxies := p.DiedProxies
+	liveProxies := p.LiveProxies
 
-	p, err := New(p.filepath, p.RotationMethod)
+	p, err := New(p.Filepath, p.RotationMethod)
+
 	if err != nil {
 		return err
 	}
+
 	p.CurrentIndex = i
+	p.DiedProxies = diedProxies
+	p.LiveProxies = liveProxies
 
 	return nil
+}
+
+func (p *ProxyManager) WatchFile(w *fsnotify.Watcher) {
+	for {
+		select {
+		case event := <-w.Events:
+			if event.Op == 2 {
+				log.Printf("Proxy file has changed, reloading...")
+
+				err := p.Reload()
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		case err := <-w.Errors:
+			log.Fatal(err)
+		}
+	}
 }

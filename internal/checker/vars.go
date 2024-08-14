@@ -8,7 +8,6 @@ import (
 
 var (
 	client *http.Client
-	ipinfo IPInfo
 
 	endpoint = "https://ipinfo.io/json"
 	tgAPI    = "https://api.telegram.org"

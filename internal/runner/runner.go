@@ -3,7 +3,10 @@ package runner
 import (
 	"context"
 	"errors"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"ktbs.dev/mubeng/common"
+	"ktbs.dev/mubeng/internal/bot"
+	"ktbs.dev/mubeng/internal/bot/handlers"
 	"ktbs.dev/mubeng/internal/checker"
 	"ktbs.dev/mubeng/internal/daemon"
 	"ktbs.dev/mubeng/internal/server"
@@ -18,6 +21,48 @@ func New(opt *common.Options) error {
 		proxyChecker := &checker.ProxyChecker{}
 
 		go proxyChecker.Run(opt)
+
+		if opt.TgBot {
+			botAPI, err := tgbotapi.NewBotAPI(os.Getenv("TG_BOT_TOKEN"))
+
+			if err != nil {
+				return errors.New("failed to create bot api")
+			}
+
+			proxyStorage := bot.NewProxyStorage(opt.ProxyManager)
+			proxyBot := bot.New(botAPI)
+
+			proxyBot.RegisterCmdView(
+				"start",
+				handlers.ViewCmdList(),
+			)
+			proxyBot.RegisterCmdView(
+				"online",
+				handlers.ViewCmdListLiveProxy(proxyStorage, false),
+			)
+			proxyBot.RegisterCmdView(
+				"offline",
+				handlers.ViewCmdListLiveProxy(proxyStorage, true),
+			)
+			proxyBot.RegisterCmdView(
+				"add",
+				handlers.ViewCmdAddProxy(proxyStorage),
+			)
+			proxyBot.RegisterCmdView(
+				"delonline",
+				handlers.ViewCmdDeleteProxy(proxyStorage, bot.Online),
+			)
+			proxyBot.RegisterCmdView(
+				"deloffline",
+				handlers.ViewCmdDeleteProxy(proxyStorage, bot.Offline),
+			)
+			proxyBot.RegisterCmdView(
+				"pruneoffline",
+				handlers.ViewCmdPruneOfflineProxy(proxyStorage),
+			)
+
+			go proxyBot.Run(ctx)
+		}
 
 		<-ctx.Done()
 

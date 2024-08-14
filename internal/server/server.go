@@ -53,7 +53,7 @@ func Run(opt *common.Options) {
 		}
 		defer watcher.Close()
 
-		go watch(watcher)
+		go opt.ProxyManager.WatchFile(watcher)
 	}
 
 	stop := make(chan os.Signal, 1)

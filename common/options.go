@@ -30,4 +30,5 @@ type Options struct {
 	PollingPeriod     string
 	CheckPeriodically bool
 	TgAlert           bool
+	TgBot             bool
 }

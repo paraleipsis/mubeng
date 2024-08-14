@@ -34,7 +34,8 @@ Options:
          --only-cc <AA>,<BB>         Only for specific country code (comma separated)
 	-cp, --check-periodically        Perform proxy check periodically
     -p,  --polling-period            Poling period for periodic proxy check (default: @every 5m)
-    -tg  --tg-alert                  Send telegram notification alert
+         --tg-alert                  Send Telegram notification alert
+         --tg-bot                    Run Telegram bot for proxy management
   
   IP ROTATOR
     -a, --address <ADDR>:<PORT>      Run proxy server

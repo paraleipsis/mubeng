@@ -4,8 +4,6 @@ import (
 	"context"
 	"os"
 	"time"
-
-	"github.com/fsnotify/fsnotify"
 )
 
 // Stop will terminate proxy server
@@ -21,22 +19,4 @@ func interrupt(sig chan os.Signal) {
 	defer cancel()
 
 	Stop(ctx)
-}
-
-func watch(w *fsnotify.Watcher) {
-	for {
-		select {
-		case event := <-w.Events:
-			if event.Op == 2 {
-				log.Info("Proxy file has changed, reloading...")
-
-				err := handler.Options.ProxyManager.Reload()
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-		case err := <-w.Errors:
-			log.Fatal(err)
-		}
-	}
 }

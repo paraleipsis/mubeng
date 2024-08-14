@@ -179,70 +179,102 @@ func (p *Proxy) nonProxy(w http.ResponseWriter, req *http.Request) {
 
 	switch req.URL.Path {
 	case "/cert":
-		w.Header().Add("Content-Type", "application/octet-stream")
-		w.Header().Add("Content-Disposition", fmt.Sprint("attachment; filename=", "goproxy-cacert.der"))
-		w.WriteHeader(http.StatusOK)
-
-		if _, err := w.Write(goproxy.GoproxyCa.Certificate[0]); err != nil {
-			http.Error(w, "Failed to get proxy certificate authority.", 500)
-			log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
-			return
-		}
+		p.certHandler(w, req)
 
 		return
 	case "/list":
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		file, err := os.Open(p.Options.File)
-
-		if err != nil {
-			http.Error(w, "Failed to get proxies list", 500)
-			log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
-			return
-		}
-
-		defer func(file *os.File) {
-			_ = file.Close()
-		}(file)
-
-		proxiesByRegion := make(map[string][]string)
-
-		scanner := bufio.NewScanner(file)
-
-		for scanner.Scan() {
-			line := scanner.Text()
-
-			parts := strings.Split(line, "|")
-
-			if len(parts) != 2 {
-				http.Error(w, "Failed to get proxies list", 500)
-				log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, fmt.Sprintf("Invalid proxy %s", line))
-				return
-			}
-
-			region := parts[1]
-			proxy := parts[0]
-
-			proxiesByRegion[region] = append(proxiesByRegion[region], proxy)
-		}
-
-		proxies, err := json.Marshal(proxiesByRegion)
-
-		if err != nil {
-			http.Error(w, "Failed to get proxies list", 500)
-			log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
-			return
-		}
-
-		if _, err := w.Write(proxies); err != nil {
-			http.Error(w, "Failed to get proxies list", 500)
-			log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
-			return
-		}
+		p.proxyListHandler(w, req)
 
 		return
 	}
 
 	http.Error(w, "This is a mubeng proxy server. Does not respond to non-proxy requests.", 500)
+}
+
+func (p *Proxy) certHandler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Content-Type", "application/octet-stream")
+	w.Header().Add("Content-Disposition", fmt.Sprint("attachment; filename=", "goproxy-cacert.der"))
+	w.WriteHeader(http.StatusOK)
+
+	if _, err := w.Write(goproxy.GoproxyCa.Certificate[0]); err != nil {
+		http.Error(w, "Failed to get proxy certificate authority.", 500)
+		log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
+		return
+	}
+
+	return
+}
+
+func (p *Proxy) proxyListHandler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	countryQuery := req.URL.Query().Get("country")
+	cityQuery := req.URL.Query().Get("city")
+
+	file, err := os.Open(p.Options.File)
+
+	if err != nil {
+		http.Error(w, "Failed to get proxies list", 500)
+		log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
+		return
+	}
+
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+
+	proxies := ProxyInfoList{}
+	proxies.Proxies = make([]ProxyInfo, 0)
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		parts := strings.Split(line, "|")
+
+		if len(parts) != 3 {
+			log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, fmt.Sprintf("Invalid proxy %s", line))
+			continue
+		}
+
+		city := parts[2]
+
+		if cityQuery != "" && city != cityQuery {
+			continue
+		}
+
+		country := parts[1]
+
+		if countryQuery != "" && country != countryQuery {
+			continue
+		}
+
+		proxy := parts[0]
+
+		proxyInfo := ProxyInfo{
+			Address: proxy,
+			Country: country,
+			City:    city,
+		}
+
+		proxies.Proxies = append(proxies.Proxies, proxyInfo)
+	}
+
+	proxiesResponse, err := json.Marshal(proxies)
+
+	if err != nil {
+		http.Error(w, "Failed to get proxies list", 500)
+		log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
+		return
+	}
+
+	if _, err := w.Write(proxiesResponse); err != nil {
+		http.Error(w, "Failed to get proxies list", 500)
+		log.Errorf("%s %s %s %s", req.RemoteAddr, req.Method, req.URL, err.Error())
+		return
+	}
+
+	return
 }

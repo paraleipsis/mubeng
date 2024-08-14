@@ -15,9 +15,11 @@ import (
 // ProxyManager defines the proxy list and current proxy position
 type ProxyManager struct {
 	CurrentIndex   int
-	filepath       string
+	Filepath       string
 	Length         int
 	Proxies        []string
+	DiedProxies    []string
+	LiveProxies    []string
 	RoundRobin     *loadbalancer.LoadBalancer[string]
 	RotationMethod string
 }
@@ -39,7 +41,7 @@ func New(filename string, rotationMethod string) (*ProxyManager, error) {
 	defer file.Close()
 
 	manager.Proxies = []string{}
-	manager.filepath = filename
+	manager.Filepath = filename
 	manager.RotationMethod = rotationMethod
 
 	scanner := bufio.NewScanner(file)
