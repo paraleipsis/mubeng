@@ -18,11 +18,17 @@ func (pc *ProxyChecker) handleTgAlert(deadProxies []string) {
 		return
 	}
 
+	pc.pruneLastAlerts()
+
+	pc.lastTgMsgIDs = append(pc.lastTgMsgIDs, *msgID)
+}
+
+func (pc *ProxyChecker) pruneLastAlerts() {
 	if len(pc.lastTgMsgIDs) != 0 {
 		var deletedMsgs []int
 
 		for i, m := range pc.lastTgMsgIDs {
-			err = pc.deleteTgMsg(m)
+			err := pc.deleteTgMsg(m)
 
 			if err != nil {
 				gologger.Error().Msgf("Error! %s", err)
@@ -35,8 +41,6 @@ func (pc *ProxyChecker) handleTgAlert(deadProxies []string) {
 			pc.lastTgMsgIDs = append(pc.lastTgMsgIDs[:d], pc.lastTgMsgIDs[d+1:]...)
 		}
 	}
-
-	pc.lastTgMsgIDs = append(pc.lastTgMsgIDs, *msgID)
 }
 
 func (pc *ProxyChecker) newRestyClient() *resty.Client {

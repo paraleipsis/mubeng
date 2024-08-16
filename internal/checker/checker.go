@@ -116,6 +116,8 @@ func (pc *ProxyChecker) Do(opt *common.Options) {
 		if opt.TgAlert {
 			pc.handleTgAlert(diedProxies)
 		}
+	} else {
+		pc.pruneLastAlerts()
 	}
 }
 
