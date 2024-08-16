@@ -63,8 +63,24 @@ func (s *ProxyStorage) AddProxies(_ context.Context, proxies ...string) error {
 	return nil
 }
 
-func (s *ProxyStorage) DeleteProxies(_ context.Context, proxies ...string) error {
+func (s *ProxyStorage) DeleteProxies(_ context.Context, offline bool, proxies ...string) error {
 	f, err := os.Open(s.ProxyManager.Filepath)
+
+	if offline {
+		for i, v := range s.ProxyManager.DiedProxies {
+			if slices.Contains(proxies, v) {
+				s.ProxyManager.DiedProxies = append(s.ProxyManager.DiedProxies[:i], s.ProxyManager.DiedProxies[i+1:]...)
+				break
+			}
+		}
+	} else {
+		for i, v := range s.ProxyManager.LiveProxies {
+			if slices.Contains(proxies, v) {
+				s.ProxyManager.LiveProxies = append(s.ProxyManager.LiveProxies[:i], s.ProxyManager.LiveProxies[i+1:]...)
+				break
+			}
+		}
+	}
 
 	if err != nil {
 		gologger.Error().Msgf("Error! %s", err)

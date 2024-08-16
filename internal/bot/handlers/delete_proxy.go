@@ -10,7 +10,7 @@ import (
 )
 
 type ProxyDeleteStorage interface {
-	DeleteProxies(ctx context.Context, proxies ...string) error
+	DeleteProxies(ctx context.Context, offline bool, proxies ...string) error
 	GetOnlineProxies(ctx context.Context) ([]string, error)
 	GetOfflineProxies(ctx context.Context) ([]string, error)
 }
@@ -23,6 +23,7 @@ func ViewCmdDeleteProxy(storage ProxyDeleteStorage, proxyStatus bot.ProxyStatus)
 		var proxiesToDelete []string
 		var proxiesList []string
 		var err error
+		var offline bool
 
 		switch proxyStatus {
 		case bot.Online:
@@ -31,12 +32,16 @@ func ViewCmdDeleteProxy(storage ProxyDeleteStorage, proxyStatus bot.ProxyStatus)
 			if err != nil {
 				return err
 			}
+
+			offline = false
 		case bot.Offline:
 			proxiesList, err = storage.GetOfflineProxies(ctx)
 
 			if err != nil {
 				return err
 			}
+
+			offline = true
 		}
 
 		if len(proxiesList) == 0 {
@@ -63,7 +68,7 @@ func ViewCmdDeleteProxy(storage ProxyDeleteStorage, proxyStatus bot.ProxyStatus)
 			}
 		}
 
-		err = storage.DeleteProxies(ctx, proxiesToDelete...)
+		err = storage.DeleteProxies(ctx, offline, proxiesToDelete...)
 
 		if err != nil {
 			return err

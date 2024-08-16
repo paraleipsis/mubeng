@@ -7,7 +7,7 @@ import (
 )
 
 type ProxyPruneStorage interface {
-	DeleteProxies(ctx context.Context, proxies ...string) error
+	DeleteProxies(ctx context.Context, offline bool, proxies ...string) error
 	GetOfflineProxies(ctx context.Context) ([]string, error)
 }
 
@@ -29,7 +29,7 @@ func ViewCmdPruneOfflineProxy(storage ProxyPruneStorage) bot.ViewFunc {
 			return nil
 		}
 
-		err = storage.DeleteProxies(ctx, proxiesList...)
+		err = storage.DeleteProxies(ctx, true, proxiesList...)
 
 		if err != nil {
 			return err
