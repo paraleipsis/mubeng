@@ -7,10 +7,13 @@ import (
 	"ktbs.dev/mubeng/common"
 	"ktbs.dev/mubeng/internal/bot"
 	"ktbs.dev/mubeng/internal/bot/handlers"
+	"ktbs.dev/mubeng/internal/bot/middleware"
 	"ktbs.dev/mubeng/internal/checker"
 	"ktbs.dev/mubeng/internal/daemon"
 	"ktbs.dev/mubeng/internal/server"
 	"os"
+	"strconv"
+	"strings"
 )
 
 // New to switch an action, whether to check or run a proxy server.
@@ -32,33 +35,78 @@ func New(opt *common.Options) error {
 			proxyStorage := bot.NewProxyStorage(opt.ProxyManager)
 			proxyBot := bot.New(botAPI)
 
+			var intUsersFilter []int64
+			usersFilterEnv := os.Getenv("USERS_FILTER")
+
+			if usersFilterEnv != "" {
+				usersFilterStr := strings.Trim(usersFilterEnv, "[]")
+				usersFilter := strings.Split(usersFilterStr, ",")
+
+				for i, v := range usersFilter {
+					if v == "" {
+						continue
+					}
+
+					v = strings.ReplaceAll(v, " ", "")
+
+					id, err := strconv.ParseInt(v, 10, 64)
+
+					if err != nil {
+						return err
+					}
+
+					intUsersFilter[i] = id
+				}
+			}
+
 			proxyBot.RegisterCmdView(
 				"start",
-				handlers.ViewCmdList(),
+				middleware.UsersFilter(
+					handlers.ViewCmdList(),
+					intUsersFilter,
+				),
 			)
 			proxyBot.RegisterCmdView(
 				"online",
-				handlers.ViewCmdListLiveProxy(proxyStorage, false),
+				middleware.UsersFilter(
+					handlers.ViewCmdListLiveProxy(proxyStorage, false),
+					intUsersFilter,
+				),
 			)
 			proxyBot.RegisterCmdView(
 				"offline",
-				handlers.ViewCmdListLiveProxy(proxyStorage, true),
+				middleware.UsersFilter(
+					handlers.ViewCmdListLiveProxy(proxyStorage, true),
+					intUsersFilter,
+				),
 			)
 			proxyBot.RegisterCmdView(
 				"add",
-				handlers.ViewCmdAddProxy(proxyStorage),
+				middleware.UsersFilter(
+					handlers.ViewCmdAddProxy(proxyStorage),
+					intUsersFilter,
+				),
 			)
 			proxyBot.RegisterCmdView(
 				"delonline",
-				handlers.ViewCmdDeleteProxy(proxyStorage, bot.Online),
+				middleware.UsersFilter(
+					handlers.ViewCmdDeleteProxy(proxyStorage, bot.Online),
+					intUsersFilter,
+				),
 			)
 			proxyBot.RegisterCmdView(
 				"deloffline",
-				handlers.ViewCmdDeleteProxy(proxyStorage, bot.Offline),
+				middleware.UsersFilter(
+					handlers.ViewCmdDeleteProxy(proxyStorage, bot.Offline),
+					intUsersFilter,
+				),
 			)
 			proxyBot.RegisterCmdView(
 				"pruneoffline",
-				handlers.ViewCmdPruneOfflineProxy(proxyStorage),
+				middleware.UsersFilter(
+					handlers.ViewCmdPruneOfflineProxy(proxyStorage),
+					intUsersFilter,
+				),
 			)
 
 			go proxyBot.Run(ctx)
