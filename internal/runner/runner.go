@@ -42,7 +42,7 @@ func New(opt *common.Options) error {
 				usersFilterStr := strings.Trim(usersFilterEnv, "[]")
 				usersFilter := strings.Split(usersFilterStr, ",")
 
-				for i, v := range usersFilter {
+				for _, v := range usersFilter {
 					if v == "" {
 						continue
 					}
@@ -55,7 +55,7 @@ func New(opt *common.Options) error {
 						return err
 					}
 
-					intUsersFilter[i] = id
+					intUsersFilter = append(intUsersFilter, id)
 				}
 			}
 
