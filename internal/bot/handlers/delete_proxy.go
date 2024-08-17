@@ -18,7 +18,7 @@ type ProxyDeleteStorage interface {
 func ViewCmdDeleteProxy(storage ProxyDeleteStorage, proxyStatus bot.ProxyStatus) bot.ViewFunc {
 	return func(ctx context.Context, botAPI *tgbotapi.BotAPI, update tgbotapi.Update) error {
 		proxiesIds := update.Message.CommandArguments()
-		proxiesIdsStr := strings.Split(proxiesIds, ",")
+		proxiesIdsStr := strings.Split(proxiesIds, " ")
 
 		var proxiesToDelete []string
 		var proxiesList []string

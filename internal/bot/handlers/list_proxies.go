@@ -14,14 +14,15 @@ type ProxyLister interface {
 	GetOfflineProxies(ctx context.Context) ([]string, error)
 }
 
-func ViewCmdListLiveProxy(lister ProxyLister, offline bool) bot.ViewFunc {
+func ViewCmdListLiveProxy(lister ProxyLister, status bot.ProxyStatus) bot.ViewFunc {
 	return func(ctx context.Context, botAPI *tgbotapi.BotAPI, update tgbotapi.Update) error {
 		var proxies []string
 		var err error
 		var msgText string
 		var statusMsg string
 
-		if offline {
+		switch status {
+		case bot.Offline:
 			proxies, err = lister.GetOfflineProxies(ctx)
 
 			if err != nil {
@@ -29,7 +30,7 @@ func ViewCmdListLiveProxy(lister ProxyLister, offline bool) bot.ViewFunc {
 			}
 
 			statusMsg = "Offline"
-		} else {
+		case bot.Online:
 			proxies, err = lister.GetOnlineProxies(ctx)
 
 			if err != nil {
@@ -58,7 +59,7 @@ func ViewCmdListLiveProxy(lister ProxyLister, offline bool) bot.ViewFunc {
 		reply := tgbotapi.NewMessage(update.Message.Chat.ID, msgText)
 		reply.ParseMode = bot.ParseModeMarkdownV2
 
-		if _, err := botAPI.Send(reply); err != nil {
+		if _, err = botAPI.Send(reply); err != nil {
 			return err
 		}
 

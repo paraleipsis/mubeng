@@ -14,12 +14,36 @@ type ProxyStorage interface {
 	AddProxies(ctx context.Context, proxies ...string) error
 }
 
-func ViewCmdAddProxy(storage ProxyStorage) bot.ViewFunc {
+func ViewCmdAddProxy(storage ProxyStorage, protocol bot.Protocol) bot.ViewFunc {
 	return func(ctx context.Context, botAPI *tgbotapi.BotAPI, update tgbotapi.Update) error {
 		proxies := update.Message.CommandArguments()
-		proxiesList := strings.Split(proxies, ",")
+		proxiesList := strings.Split(proxies, " ")
 
-		for _, proxy := range proxiesList {
+		for i, proxy := range proxiesList {
+			proxyParams := strings.Split(proxy, ":")
+
+			if len(proxyParams) != 4 {
+				if _, err := botAPI.Send(
+					tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("invalid proxy input format: %s. Example: ip:port:user:password", proxy)),
+				); err != nil {
+					return err
+				}
+
+				return nil
+			}
+
+			proxyIP := proxyParams[0]
+			proxyPort := proxyParams[1]
+			proxyUser := proxyParams[2]
+			proxyPassword := proxyParams[3]
+
+			switch protocol {
+			case bot.HTTP:
+				proxy = fmt.Sprintf("http://%s:%s@%s:%s", proxyUser, proxyPassword, proxyIP, proxyPort)
+			case bot.HTTPS:
+				proxy = fmt.Sprintf("https://%s:%s@%s:%s", proxyUser, proxyPassword, proxyIP, proxyPort)
+			}
+
 			parsedURL, err := url.Parse(proxy)
 
 			if err != nil {
@@ -73,6 +97,8 @@ func ViewCmdAddProxy(storage ProxyStorage) bot.ViewFunc {
 
 				return nil
 			}
+
+			proxiesList[i] = proxy
 		}
 
 		err := storage.AddProxies(ctx, proxiesList...)

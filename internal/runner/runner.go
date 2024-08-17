@@ -69,21 +69,28 @@ func New(opt *common.Options) error {
 			proxyBot.RegisterCmdView(
 				"online",
 				middleware.UsersFilter(
-					handlers.ViewCmdListLiveProxy(proxyStorage, false),
+					handlers.ViewCmdListLiveProxy(proxyStorage, bot.Online),
 					intUsersFilter,
 				),
 			)
 			proxyBot.RegisterCmdView(
 				"offline",
 				middleware.UsersFilter(
-					handlers.ViewCmdListLiveProxy(proxyStorage, true),
+					handlers.ViewCmdListLiveProxy(proxyStorage, bot.Offline),
 					intUsersFilter,
 				),
 			)
 			proxyBot.RegisterCmdView(
-				"add",
+				"addhttp",
 				middleware.UsersFilter(
-					handlers.ViewCmdAddProxy(proxyStorage),
+					handlers.ViewCmdAddProxy(proxyStorage, bot.HTTP),
+					intUsersFilter,
+				),
+			)
+			proxyBot.RegisterCmdView(
+				"addhttps",
+				middleware.UsersFilter(
+					handlers.ViewCmdAddProxy(proxyStorage, bot.HTTPS),
 					intUsersFilter,
 				),
 			)

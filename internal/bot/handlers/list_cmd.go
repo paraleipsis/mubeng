@@ -14,9 +14,12 @@ func ViewCmdList() bot.ViewFunc {
 		opts := []string{
 			"/online - Get online proxies list",
 			"/offline - Get offline proxies list",
-			"/add - Add proxies. Separate multiple proxies with a comma. For example proxy1,proxy2.",
-			"/delonline - Delete online proxies from monitoring list by IDs. Separate multiple proxies with a comma. For example 1,2,3,4.",
-			"/deloffline - Delete offline proxies from monitoring list by IDs. Separate multiple proxies with a comma. For example 1,2,3,4.",
+
+			"/addhttp - Add http proxies. Separate multiple proxies with a space. For example ip:port:user:password ip:port:user:password.",
+			"/addhttps - Add https proxies. Separate multiple proxies with a space. For example ip:port:user:password ip:port:user:password.",
+
+			"/delonline - Delete online proxies from monitoring list by IDs. Separate multiple proxies with a space. For example 1 2 3 4.",
+			"/deloffline - Delete offline proxies from monitoring list by IDs. Separate multiple proxies with a space. For example 1 2 3 4.",
 			"/pruneoffline - Delete all offline proxies from monitoring list",
 		}
 

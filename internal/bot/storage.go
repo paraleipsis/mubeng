@@ -17,6 +17,13 @@ const (
 	Offline ProxyStatus = "offline"
 )
 
+type Protocol string
+
+const (
+	HTTP  Protocol = "http"
+	HTTPS Protocol = "https"
+)
+
 type ProxyStorage struct {
 	ProxyManager *proxymanager.ProxyManager
 }
