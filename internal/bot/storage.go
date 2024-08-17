@@ -6,13 +6,16 @@ import (
 	"context"
 	"github.com/projectdiscovery/gologger"
 	"ktbs.dev/mubeng/internal/proxymanager"
+	"ktbs.dev/mubeng/pkg/helper"
 	"os"
 	"slices"
+	"strings"
 )
 
 type ProxyStatus string
 
 const (
+	All     ProxyStatus = "all"
 	Online  ProxyStatus = "online"
 	Offline ProxyStatus = "offline"
 )
@@ -30,6 +33,31 @@ type ProxyStorage struct {
 
 func NewProxyStorage(proxyManager *proxymanager.ProxyManager) *ProxyStorage {
 	return &ProxyStorage{ProxyManager: proxyManager}
+}
+
+func (s *ProxyStorage) GetAllProxies(_ context.Context) ([]string, error) {
+	file, err := os.Open(s.ProxyManager.Filepath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+
+	proxies := []string{}
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		proxy := helper.Eval(scanner.Text())
+		proxy = strings.Split(proxy, "|")[0]
+
+		proxies = append(proxies, proxy)
+	}
+
+	return proxies, nil
 }
 
 func (s *ProxyStorage) GetOnlineProxies(_ context.Context) ([]string, error) {
@@ -74,17 +102,15 @@ func (s *ProxyStorage) DeleteProxies(_ context.Context, offline bool, proxies ..
 	f, err := os.Open(s.ProxyManager.Filepath)
 
 	if offline {
-		for i, v := range s.ProxyManager.DiedProxies {
-			if slices.Contains(proxies, v) {
+		for i := len(s.ProxyManager.DiedProxies) - 1; i >= 0; i-- {
+			if slices.Contains(proxies, s.ProxyManager.DiedProxies[i]) {
 				s.ProxyManager.DiedProxies = append(s.ProxyManager.DiedProxies[:i], s.ProxyManager.DiedProxies[i+1:]...)
-				break
 			}
 		}
 	} else {
-		for i, v := range s.ProxyManager.LiveProxies {
-			if slices.Contains(proxies, v) {
+		for i := len(s.ProxyManager.LiveProxies) - 1; i >= 0; i-- {
+			if slices.Contains(proxies, s.ProxyManager.LiveProxies[i]) {
 				s.ProxyManager.LiveProxies = append(s.ProxyManager.LiveProxies[:i], s.ProxyManager.LiveProxies[i+1:]...)
-				break
 			}
 		}
 	}

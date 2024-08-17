@@ -12,9 +12,10 @@ import (
 type ProxyLister interface {
 	GetOnlineProxies(ctx context.Context) ([]string, error)
 	GetOfflineProxies(ctx context.Context) ([]string, error)
+	GetAllProxies(ctx context.Context) ([]string, error)
 }
 
-func ViewCmdListLiveProxy(lister ProxyLister, status bot.ProxyStatus) bot.ViewFunc {
+func ViewCmdListProxy(lister ProxyLister, status bot.ProxyStatus) bot.ViewFunc {
 	return func(ctx context.Context, botAPI *tgbotapi.BotAPI, update tgbotapi.Update) error {
 		var proxies []string
 		var err error
@@ -38,6 +39,14 @@ func ViewCmdListLiveProxy(lister ProxyLister, status bot.ProxyStatus) bot.ViewFu
 			}
 
 			statusMsg = "Online"
+		case bot.All:
+			proxies, err = lister.GetAllProxies(ctx)
+
+			if err != nil {
+				return err
+			}
+
+			statusMsg = "All"
 		}
 
 		msgProxies := make([]string, 0)

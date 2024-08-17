@@ -67,16 +67,23 @@ func New(opt *common.Options) error {
 				),
 			)
 			proxyBot.RegisterCmdView(
+				"all",
+				middleware.UsersFilter(
+					handlers.ViewCmdListProxy(proxyStorage, bot.All),
+					intUsersFilter,
+				),
+			)
+			proxyBot.RegisterCmdView(
 				"online",
 				middleware.UsersFilter(
-					handlers.ViewCmdListLiveProxy(proxyStorage, bot.Online),
+					handlers.ViewCmdListProxy(proxyStorage, bot.Online),
 					intUsersFilter,
 				),
 			)
 			proxyBot.RegisterCmdView(
 				"offline",
 				middleware.UsersFilter(
-					handlers.ViewCmdListLiveProxy(proxyStorage, bot.Offline),
+					handlers.ViewCmdListProxy(proxyStorage, bot.Offline),
 					intUsersFilter,
 				),
 			)

@@ -17,7 +17,11 @@ type ProxyStorage interface {
 func ViewCmdAddProxy(storage ProxyStorage, protocol bot.Protocol) bot.ViewFunc {
 	return func(ctx context.Context, botAPI *tgbotapi.BotAPI, update tgbotapi.Update) error {
 		proxies := update.Message.CommandArguments()
-		proxiesList := strings.Split(proxies, " ")
+
+		proxies = strings.Join(strings.Fields(proxies), " ")
+		proxies = strings.ReplaceAll(proxies, ", ", ",")
+		proxies = strings.ReplaceAll(proxies, "\n ", ",")
+		proxiesList := strings.FieldsFunc(proxies, bot.Split)
 
 		for i, proxy := range proxiesList {
 			proxyParams := strings.Split(proxy, ":")
